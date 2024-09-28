@@ -1,30 +1,14 @@
 #include <stdio.h>
+#include <stdint.h>
 
 int main()
 {
-    // 增加陣列大小以確保足夠空間，並考慮卷積結果的最大長度
-    float x[30] = {0}, h[30] = {0}, y[60] = {0}; // 假設序列長度不超過 30
-    int i, j, m, n;
-
-    // 輸入兩個序列的長度
-    printf("Enter the length of the first sequence, m = ");
-    scanf("%d", &m);
-    printf("Enter the length of the second sequence, n = ");
-    scanf("%d", &n);
-
-    // 輸入第一個序列
-    printf("Enter the first sequence x[n]: ");
-    for (i = 0; i < m; i++)
-    {
-        scanf("%f", &x[i]);
-    }
-
-    // 輸入第二個序列
-    printf("Enter the second sequence h[n]: ");
-    for (i = 0; i < n; i++)
-    {
-        scanf("%f", &h[i]);
-    }
+    // 固定的 FP16 輸入值
+    float x[10] = {1.0, 2.0, 0.0}; // FP16: 1.0, 2.0, 0.0
+    float h[10] = {3.0, 4.0, 0.0}; // FP16: 3.0, 4.0, 0.0
+    float y[20];
+    // float x[30] = {0}, h[30] = {0}, y[60] = {0}; // 假設序列長度不超過 30
+    int i, j, m = 3, n = 3;
 
     // 計算卷積
     for (i = 0; i < m + n - 1; i++)
@@ -48,4 +32,3 @@ int main()
 
     return 0;
 }
-

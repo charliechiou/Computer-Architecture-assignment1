@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 
 // 用於將 FP32 轉換為位元表示
 static inline uint32_t fp32_to_bits(float f)
@@ -107,6 +108,11 @@ int float_mul(int f1, int f2)
 
 int main()
 {
+    clock_t start, end;   // 定義 clock_t 型別的變數來存放時間
+    double cpu_time_used; // 用於儲存計算出來的運行時間
+
+    start = clock(); // 記錄開始時間
+
     // 固定的 FP16 輸入值
     uint16_t x[] = {0x3C00, 0x4000, 0x0000}; // FP16: 1.0, 2.0, 0.0
     uint16_t h[] = {0x4200, 0x4400, 0x0000}; // FP16: 3.0, 4.0, 0.0
@@ -128,6 +134,8 @@ int main()
             }
         }
     }
+
+    end = clock(); // 記錄結束時間
 
     // 輸出卷積結果
     printf("Convoluted sequence is:\n");
