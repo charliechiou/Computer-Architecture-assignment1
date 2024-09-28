@@ -1,8 +1,8 @@
 {
-    "C_Cpp.default.compilerPath": "C:\\TDM-GCC-64\\bin\\gcc.exe",
-    "files.associations": {
-        "*.ejs": "html",
-        "*html": "html",
-        "string.h": "c"
-    }
+  "C_Cpp.default.compilerPath": "C:\\MinGW\\bin\\g++.exe",
+  "files.associations": {
+    "*.ejs": "html",
+    "*html": "html",
+    "string.h": "c"
+  }
 }
