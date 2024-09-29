@@ -5,7 +5,7 @@ next_line: .string "\n"
 str2: .string "Output fp32 is: "
 
 .text
-main:
+fp16_to_fp32:
     #prologue
     addi sp,sp,-20
     sw s0,0(sp)
