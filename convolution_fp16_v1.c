@@ -59,44 +59,33 @@ int highest_bit_pos(uint32_t value)
 }
 
 // fp16 multiplication
-int float_mul(int f1, int f2)
+uint16_t float_mul(uint16_t ia, uint16_t ib)
 {
-    int res_exp = 0;
-    int res_frac = 0;
+    /* TODO: Special values like NaN and INF */
 
-    // 取得指數和尾數
-    int exp1 = (f1 & (((1 << 5) - 1) << 10)) >> 10;
-    int exp2 = (f2 & (((1 << 5) - 1) << 10)) >> 10;
-    int frac1 = (f1 & ((1 << 10) - 1)) | (1 << 10);
-    int frac2 = (f2 & ((1 << 10) - 1)) | (1 << 10);
+    /* sign */
+    int sa = ia >> 15;
+    int sb = ib >> 15;
 
-    // 加上指數，並去除雙重偏置
-    res_exp = exp1 + exp2 - 15;
+    /* mantissa */
+    int32_t ma = (ia & 0x3FF) | 0x400; // FP16: 10-bit mantissa + hidden bit
+    int32_t mb = (ib & 0x3FF) | 0x400;
 
-    // 相乘尾數
-    int64_t res_mant = (int64_t)frac1 * (int64_t)frac2; // 11 位 * 11 位 → 22 位
+    /* exponent */
+    int32_t ea = ((ia >> 10) & 0x1F); // FP16: 5-bit exponent
+    int32_t eb = ((ib >> 10) & 0x1F);
 
-    // 根據最高位來調整尾數
-    if (highest_bit_pos(res_mant) == 21) // 如果最高位在第 21 位
-    {
-        res_mant >>= 11; // 向右移 11 位
-        res_exp += 1;    // 調整指數
-    }
-    else
-    {
-        res_mant >>= 10; // 向右移 10 位
-    }
-    res_frac = res_mant & ((1 << 10) - 1); // 移除隱含位元
+    /* 'r' = result */
+    int64_t mrtmp = ((int64_t)ma * mb) >> 10; // Shift by FP16 mantissa bits (10 bits)
+    int mshift = mrtmp >> 24;                 // Adjust shift if necessary (simplified example for mshift calculation)
 
-    // 如果指數超過範圍，則設為無窮大或 NaN
-    if (res_exp <= 0)
-        res_exp = 0; // 設為次正常數或零
-    else if (res_exp >= (1 << 5) - 1)
-        res_exp = (1 << 5) - 1, res_frac = 0; // 無窮大或 NaN
-
-    // 構建最終的浮點數結果
-    int result = (res_exp << 10) | res_frac;
-    return result;
+    int64_t mr = mrtmp >> mshift;
+    int32_t ertmp = ea + eb - 15; // Adjust exponent bias for FP16 (bias is 15)
+    int32_t er = mshift ? ertmp + 1 : ertmp;
+    /* TODO: Handle overflow */
+    int sr = sa ^ sb;
+    uint16_t r = (sr << 15) | ((er & 0x1F) << 10) | (mr & 0x3FF); // Reconstruct FP16
+    return r;
 }
 
 int main()
