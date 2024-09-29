@@ -3,6 +3,7 @@
   "files.associations": {
     "*.ejs": "html",
     "*html": "html",
-    "string.h": "c"
+    "string.h": "c",
+    "stdio.h": "c"
   }
 }
