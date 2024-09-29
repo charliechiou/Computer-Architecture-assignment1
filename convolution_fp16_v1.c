@@ -2,47 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 
-// 用於將 FP32 轉換為位元表示
-static inline uint32_t fp32_to_bits(float f)
-{
-    uint32_t bits;
-    memcpy(&bits, &f, sizeof(bits));
-    return bits;
-}
-
-// 用於將位元表示轉換為 FP32
-static inline float bits_to_fp32(uint32_t bits)
-{
-    float f;
-    memcpy(&f, &bits, sizeof(f));
-    return f;
-}
-
-// 將 FP16 轉換為 FP32 的函數
-static inline float fp16_to_fp32(uint16_t h)
-{
-    const uint32_t w = (uint32_t)h << 16;
-    const uint32_t sign = w & UINT32_C(0x80000000);
-    const uint32_t two_w = w + w;
-
-    const uint32_t exp_offset = UINT32_C(0xE0) << 23;
-    const float exp_scale = 0x1.0p-112f;
-    const float normalized_value =
-        bits_to_fp32((two_w >> 4) + exp_offset) * exp_scale;
-
-    const uint32_t mask = UINT32_C(126) << 23;
-    const float magic_bias = 0.5f;
-    const float denormalized_value =
-        bits_to_fp32((two_w >> 17) | mask) - magic_bias;
-
-    const uint32_t denormalized_cutoff = UINT32_C(1) << 27;
-    const uint32_t result =
-        sign | (two_w < denormalized_cutoff ? fp32_to_bits(denormalized_value)
-                                            : fp32_to_bits(normalized_value));
-    return bits_to_fp32(result);
-}
-
-// 自定義 `my_clz` 用於計算最高有效位
+// customize clz
 static inline int my_clz(uint32_t x)
 {
     int count = 0;
@@ -55,6 +15,40 @@ static inline int my_clz(uint32_t x)
     return count;
 }
 
+// bits to fp32
+static inline float bits_to_fp32(uint32_t w)
+{
+    union
+    {
+        uint32_t as_bits;
+        float as_value;
+    } fp32 = {.as_bits = w};
+    return fp32.as_value;
+}
+
+// fp16 to fp32
+static inline float fp16_to_fp32(uint16_t h)
+{
+    const uint32_t w = (uint32_t)h << 16;              // Extends the fp16 to fp32 bits
+    const uint32_t sign = w & UINT32_C(0x80000000);    // Isolates the sign bit
+    const uint32_t nonsign = w & UINT32_C(0x7FFFFFFF); // Extracts the mantissa and exponent
+
+    uint32_t renorm_shift = my_clz(nonsign); // Indicate howmany bits the mantissa needs to be shifted
+    // for renorm number the shift will be 0,shifting a denormalized number will move the mantissa into the exponent
+    renorm_shift = renorm_shift > 5 ? renorm_shift - 5 : 0;
+    /*
+     *  inf_nan_mask ==
+     *                   0x7F800000 if the half-precision number is
+     *                   NaN or infinity (exponent of 15)
+     *                   0x00000000 otherwise
+     */
+    const int32_t inf_nan_mask = ((int32_t)(nonsign + 0x04000000) >> 8) & INT32_C(0x7F800000);
+    const int32_t zero_mask = (int32_t)(nonsign - 1) >> 31;
+    int32_t result = sign | ((((nonsign << renorm_shift >> 3) + ((0x70 - renorm_shift) << 23)) | inf_nan_mask) & ~zero_mask);
+
+    return bits_to_fp32(result);
+}
+
 // 計算最高有效位的位置，使用 `my_clz` 函數
 int highest_bit_pos(uint32_t value)
 {
@@ -64,7 +58,7 @@ int highest_bit_pos(uint32_t value)
     return 31 - my_clz(value); // 使用 `my_clz` 計算最高位位置
 }
 
-// 16 位浮點數乘法
+// fp16 multiplication
 int float_mul(int f1, int f2)
 {
     int res_exp = 0;
@@ -107,13 +101,13 @@ int float_mul(int f1, int f2)
 
 int main()
 {
-    // 固定的 FP16 輸入值
+    // fp16 input
     uint16_t x[] = {0x3C00, 0x4000, 0x0000}; // FP16: 1.0, 2.0, 0.0
     uint16_t h[] = {0x4200, 0x4400, 0x0000}; // FP16: 3.0, 4.0, 0.0
-    float y[20] = {0};                       // 假設卷積結果的最大長度
+    float y[20] = {0};
     int i, j, m = 3, n = 3;
 
-    // 計算卷積，使用 FP16 相乘，然後轉換為 FP32 再加法
+    // Perform convolution by multiplying using FP16, then convert to FP32 for addition.
     for (i = 0; i < m + n - 1; i++)
     {
         y[i] = 0.0f;
@@ -121,15 +115,15 @@ int main()
         {
             if (j < m && (i - j) < n)
             {
-                // 使用 FP16 進行乘法
+                // multiplying using FP16
                 uint16_t fp16_result = float_mul(x[j], h[i - j]);
-                // 將結果轉換為 FP32，進行累加
+                // convert to FP32 for addition
                 y[i] += fp16_to_fp32(fp16_result);
             }
         }
     }
 
-    // 輸出卷積結果
+    // output
     printf("Convoluted sequence is:\n");
     for (i = 0; i < m + n - 1; i++)
     {
