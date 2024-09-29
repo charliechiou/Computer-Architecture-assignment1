@@ -5,6 +5,13 @@ next_line: .string "\n"
 str2: .string "Output fp32 is: "
 
 .text
+
+main:
+    lw a0,x
+    jal ra,fp16_to_fp32
+    li a7,10
+    ecall   
+    
 fp16_to_fp32:
     #prologue
     addi sp,sp,-20
@@ -23,11 +30,13 @@ fp16_to_fp32:
     and s3, s1, s3 # nonsign(s3) = w & UINT32_C(0x7FFFFFFF);
     
     mv t1,a0
+    mv t2,ra
     mv a0,s3
     jal my_clz #renorm_shift = my_clz(nonsign);
     jal renorm_if
     mv s4, a0  #renorm_shift(s4) = renorm_shift > 5 ? renorm_shift - 5 : 0;
     mv a0,t1
+    mv ra,t2
     
     li t0,0x7F800000 #INT32_C(0x7F800000)
     li t1,0x04000000 
@@ -53,7 +62,9 @@ fp16_to_fp32:
     
     or a0,s2,t2
     
-    jal ra, printResult
+    mv t1,ra
+    jal printResult
+    mv ra,t1
     
     #epilogue
     lw s4,20(sp)
@@ -63,8 +74,7 @@ fp16_to_fp32:
     lw s0,0(sp)
     addi sp,sp,20
     
-    li a7,10
-    ecall   
+    ret  
     
 my_clz:
     #prologue
