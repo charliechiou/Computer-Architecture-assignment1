@@ -50,7 +50,7 @@ static inline float fp16_to_fp32(uint16_t h)
 }
 void main()
 {
-    uint16_t x = 0x3555;
+    uint16_t x = 0x4200;
     int32_t y = fp16_to_fp32(x);
     printf("0x%08X \n", x);
     printf("0x%08X \n", y);

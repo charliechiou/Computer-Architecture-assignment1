@@ -1,0 +1,1 @@
+if (mant_result & 0x0800)

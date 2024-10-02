@@ -91,6 +91,6 @@ int main()
 
     uint16_t result = fp16_bitwise_add(a, b); // 使用位運算的 FP16 加法
 
-    printf("Result (in FP16): 0x%04X\n", result); // 輸出結果
+    printf("Result (in FP16): 0x%04X\n", result); // 輸出結果 expcted 0x4200
     return 0;
 }
