@@ -37,6 +37,8 @@ uint16_t fp16_bitwise_add(uint16_t a, uint16_t b)
         mant_a = align_mantissa(mant_a, exp_b - exp_a);
         exp_a = exp_b;
     }
+    printf("test_a (in FP16): 0x%04X\n", mant_a); // 輸出結果 expcted 0x4200
+    printf("test_b (in FP16): 0x%04X\n", mant_b); // 輸出結果 expcted 0x4200
 
     // 根據符號進行加減
     uint16_t mant_result;
@@ -61,6 +63,7 @@ uint16_t fp16_bitwise_add(uint16_t a, uint16_t b)
     // 規則化結果，如果有進位，指數加 1
     if (mant_result & 0x0800)
     { // 進位導致尾數溢出
+
         mant_result >>= 1;
         exp_result++;
     }
@@ -79,6 +82,9 @@ uint16_t fp16_bitwise_add(uint16_t a, uint16_t b)
         exp_result = 0;
         mant_result = 0;
     }
+    printf("sign (in FP16): 0x%04X\n", sign_a);          // 輸出結果 expcted 0x4200
+    printf("exp (in FP16): 0x%04X\n", exp_result);       // 輸出結果 expcted 0x4200
+    printf("mantissa (in FP16): 0x%04X\n", mant_result); // 輸出結果 expcted 0x4200
 
     // 組合符號、指數和尾數為最終的 FP16 數值
     return sign_a | (exp_result << 10) | mant_result;
