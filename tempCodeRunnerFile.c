@@ -1,1 +1,1 @@
-if (mant_result & 0x0800)
+int sign_result = sign_a ^ sign_b;
