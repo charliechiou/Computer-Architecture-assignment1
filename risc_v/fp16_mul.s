@@ -1,14 +1,31 @@
 .data
 x: .4byte 0x3c00
 y: .4byte 0x4200
+test_cases:
+    .4byte 0x3c00, 0x4000     # 1.0 * 2.0, -> 0x4000 (2.0)
+    .4byte 0x3800, 0x3e00     # 0.5 * 1.5, -> 0x3a00 (0.75)
+    .4byte 0x3a00, 0x4000     # 1.25 * 2.0, -> 0x4400 (2.5)
+    .4byte 0x3c00, 0x3e00     # 1.0 * 1.5, -> 0x3e00 (1.5)
+    .4byte 0x4000, 0x4000     # 2.0 * 2.0, -> 0x4400 (4.0)
+    
 str1: .string "Input FP16 is:"
 str2: .string " and "
 str3: .string "\nResult is "
+str4: .string "\n"
 
 .text
 main:
-    lw s0,x
-    lw s1,y #load data
+    li s2,0 #set index = 0
+    li s3,5 #total data = 5
+
+test_loop:
+    beq s2,s3,end_tests
+    la t0,test_cases
+    slli t1,s2,3
+    add t0,t0,t1
+    
+    lw s0,0(t0)
+    lw s1,4(t0)
     
     mv a0,s0
     mv a1,s1
@@ -20,6 +37,10 @@ main:
     mv a2,t0
     jal ra,printResult
     
+    addi s2,s2,1
+    j test_loop
+
+end_tests:
     li a7,10
     ecall
     
@@ -122,5 +143,9 @@ printResult:
     mv a0,a2
     li a7,34
     ecall #print result
+    
+    la a0,str4
+    li a7,4
+    ecall #print "\n"
     
     ret
