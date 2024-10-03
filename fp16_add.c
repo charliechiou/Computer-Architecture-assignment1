@@ -37,8 +37,6 @@ uint16_t fp16_bitwise_add(uint16_t a, uint16_t b)
         mant_a = align_mantissa(mant_a, exp_b - exp_a);
         exp_a = exp_b;
     }
-    printf("test_a (in FP16): 0x%04X\n", mant_a); // 輸出結果 expcted 0x4200
-    printf("test_b (in FP16): 0x%04X\n", mant_b); // 輸出結果 expcted 0x4200
 
     // 根據符號進行加減
     uint16_t mant_result;
