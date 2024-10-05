@@ -31,10 +31,10 @@ test_loop:
     mv a1,s1
     jal ra,fp16_mul
     
-    mv t0,a0
+    mv t3,a0
     mv a0,s0
     mv a1,s1
-    mv a2,t0
+    mv a2,t3
     jal ra,printResult
     
     addi s2,s2,1
@@ -122,7 +122,27 @@ mshift_zero:
     addi sp,sp,32
     
     ret
-
+imul16:
+    #a0 -> a, a1 -> b
+    li a3,0
+    li t1,0 #set i
+    li t2,16 #set max i
+loop:
+    beq t1,t2,end_loop
+    srl t3,a1,t1
+    andi t3,t3,1 #getbit(b64, i)
+    beqz t3,skip_loop
+    sll t4,a0,t1
+    add a3,a3,t4 #r += a64 << i;
+    
+skip_loop:
+    addi t1,t1,1
+    j loop
+    
+end_loop:
+    mv a0,a3
+    ret
+    
 
 printResult:
     mv t0,a0
@@ -156,23 +176,3 @@ printResult:
     ecall #print "\n"
     
     ret
-
-imul16:
-    #a0 -> a, a1 -> b
-    li t1,0 #set i
-    li t2,16 #set max i
-loop:
-    beq t1,t2,end_loop
-    srl t3,a1,t0
-    andi t3,t3,1 #getbit(b64, i)
-    bnez t3,loop
-    sll t3,a0,t0
-    add a3,a3,t3 #r += a64 << i;
-    addi t1,t1,1
-    j loop
-    
-end_loop:
-    mv a0,a3
-    ret
-    
-    
