@@ -5,7 +5,6 @@ testcase1_h:
     .4byte 0x4200 0x4000 0x3c00 #input h
 # expected output -> 0x4200 0x4800 0x4500 0x4000 0x0000
 
-    
 testcase2_x:
     .4byte 0x3c00 0x4000 0x3c00 #input x
 testcase2_h:
@@ -18,8 +17,15 @@ testcase3_h:
     .4byte 0x4000 0x3c00 0x3c00 #input h
 # expected output ->  0x4900 0x4a80 0x4980 0x4500 0x3c00
 
+testcase4_x:
+    .4byte 0x3c00 0x4000 0x3c00 0x4400 #input x
+testcase4_h:
+    .4byte 0x4200 0x4000 0x3c00 #input h
+# expected output ->  0x4200 0x4800 0x4800 0x4c00 0x4880 0x4400
+
 y:
-    .4byte 0x0000 0x0000 0x0000 0x0000 0x0000 #initial y
+    .zero 20 #for testcase 1~3
+    #.zero 24 #for testcase 4
 
 str1:.string "Input x is : "
 str2:.string "Input h is : "
@@ -29,14 +35,15 @@ str5:.string "Output y is : "
 
 .text
 printInputInit:
-    la s0,testcase3_x
-    la s1,testcase3_h
+    la s0,testcase1_x
+    la s1,testcase1_h
     mv a0,s0
     mv a1,s1
     jal printInput
 
 main:
-    li s2,3 # m(s2) = 3
+    li s2,3 # m(s2) = 3 for testcase 1~3
+    #li s2,4 # m(s2) = 4 for testcase 4
     li s3,3 # n(s3) = 3
     li s4,0 # i(s4) = 0
     add s5,s2,s3
@@ -319,7 +326,7 @@ printInput:
     
     lw a0,0(t1)
     li a7,34
-    ecall
+    ecall #print x[0]
     
     la a0,str3
     li a7,4
@@ -327,7 +334,7 @@ printInput:
     
     lw a0,4(t1)
     li a7,34
-    ecall
+    ecall #print x[1]
     
     la a0,str3
     li a7,4
@@ -335,7 +342,19 @@ printInput:
     
     lw a0,8(t1)
     li a7,34
-    ecall
+    ecall #print x[2]
+    
+    la a0,str3
+    li a7,4
+    ecall #print space
+    
+    ##### below is for testcase 4 #####
+    
+    #lw a0,12(t1)
+    #li a7,34
+    #ecall #print x[3]
+    
+    ###################################
     
     la a0,str4
     li a7,4
@@ -343,11 +362,11 @@ printInput:
     
     la a0,str2
     li a7,4
-    ecall
+    ecall #print "Input h is : "
 
     lw a0,0(t2)
     li a7,34
-    ecall
+    ecall #print h[0]
     
     la a0,str3
     li a7,4
@@ -355,7 +374,7 @@ printInput:
     
     lw a0,4(t2)
     li a7,34
-    ecall
+    ecall #print h[1]
     
     la a0,str3
     li a7,4
@@ -363,7 +382,7 @@ printInput:
     
     lw a0,8(t2)
     li a7,34
-    ecall
+    ecall #print h[2]
 
     la a0,str4
     li a7,4
@@ -379,7 +398,7 @@ printOutput:
     
     lw a0,0(t1)
     li a7,34
-    ecall
+    ecall #print y[1]
     
     la a0,str3
     li a7,4
@@ -387,7 +406,7 @@ printOutput:
     
     lw a0,4(t1)
     li a7,34
-    ecall
+    ecall #print y[2]
     
     la a0,str3
     li a7,4
@@ -395,7 +414,7 @@ printOutput:
     
     lw a0,8(t1)
     li a7,34
-    ecall
+    ecall #print y[3]
     
     la a0,str3
     li a7,4
@@ -403,7 +422,7 @@ printOutput:
     
     lw a0,12(t1)
     li a7,34
-    ecall
+    ecall #print y[4]
     
     la a0,str3
     li a7,4
@@ -411,4 +430,18 @@ printOutput:
     
     lw a0,16(t1)
     li a7,34
-    ecall
+    ecall #print y[5]
+    
+        la a0,str3
+    li a7,4
+    ecall #print space
+    
+    ##### below is for testcase 4 #####
+    #lw a0,20(t1)
+    #li a7,34
+    #ecall #print y[6]
+    
+    #la a0,str3
+    #li a7,4
+    #ecall #print space
+    ###################################
