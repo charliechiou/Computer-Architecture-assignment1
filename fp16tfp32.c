@@ -2,17 +2,6 @@
 #include <stdint.h>
 #include <string.h>
 
-// bits to fp32
-static inline float bits_to_fp32(uint32_t w)
-{
-    union
-    {
-        uint32_t as_bits;
-        float as_value;
-    } fp32 = {.as_bits = w};
-    return fp32.as_value;
-}
-
 // customize clz
 static inline int my_clz(uint32_t x)
 {
