@@ -52,7 +52,7 @@ main:
     
 outer_loop:
     bge s4, s5, end_outer_loop
-    li s7, 0           # ªì©l¤Æ j = 0
+    li s7, 0        
     
 inner_loop:
     blt s4, s7, end_inner_loop
@@ -62,7 +62,7 @@ check_j_less_m:
     j skip_inner_loop
     
 check_ij_less_n:
-    sub t1, s4, s7     # ­pºâ i - j
+    sub t1, s4, s7 
     blt t1, s3, calculate
     j skip_inner_loop
 
@@ -74,12 +74,12 @@ calculate:
     slli t1,t1,2
     add t1,t1,s1
     lw a1,0(t1)
-    jal fp16_mul
+    jal fp16_mul #uint16_t fp16_result = float_mul(x[j], h[i - j]);
     
     slli t0,s4,2
     add t0,t0,s6
     lw a1,0(t0)
-    jal fp16_add
+    jal fp16_add #y[i] = fp16_bitwise_add(y[i], fp16_result);
     
     sw a0,0(t0)
     
@@ -95,7 +95,6 @@ end_inner_loop:
 end_outer_loop:
     mv a0,s6
     jal printOutput
-    
     
 fp16_mul:
     #prologue
