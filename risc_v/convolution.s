@@ -3,25 +3,25 @@ testcase1_x:
     .4byte 0x3C00 0x4000 0x0000 #input x
 testcase1_h:
     .4byte 0x4200 0x4000 0x3c00 #input h
-# expected output -> 3(0x4200) 8(0x4800) 5(0x4500) 2(0x4000) 0(0x0000)
+# expected output -> 0x4200 0x4800 0x4500 0x4000 0x0000
 
 testcase2_x:
     .4byte 0x3c00 0x4000 0x3c00 #input x
 testcase2_h:
     .4byte 0x4200 0x4000 0x3c00 #input h
-# expected output -> 3(0x4200) 8(0x4800) 8(0x4800) 4(0x4400) 1(0x3c00)
+# expected output -> 0x4200 0x4800 0x4800 0x4400 0x3c00
     
 testcase3_x:
     .4byte 0x4500 0x4400 0x3c00 #input x
 testcase3_h:
     .4byte 0x4000 0x3c00 0x3c00 #input h
-# expected output ->  10(0x4900) 13(0x4a80) 11(0x4980) 5(0x4500) 1(0x3c00)
+# expected output ->  0x4900 0x4a80 0x4980 0x4500 0x3c00
 
 testcase4_x:
     .4byte 0x3c00 0x4000 0x3c00 0x4400 #input x
 testcase4_h:
     .4byte 0x4200 0x4000 0x3c00 #input h
-# expected output ->  3(0x4200) 8(0x4800) 8(0x4800) 16(0x4c00) 9(0x4880) 4(0x4400)
+# expected output ->  0x4200 0x4800 0x4800 0x4c00 0x4880 0x4400
 
 y:
     .zero 20 #for testcase 1~3
@@ -94,9 +94,7 @@ end_inner_loop:
     
 end_outer_loop:
     mv a0,s6
-    j printOutput
-    
-#################################################################
+    jal printOutput
     
 fp16_mul:
     #prologue
@@ -196,8 +194,6 @@ skip_loop:
 end_loop:
     mv a0,a3
     ret
-    
-#################################################################
     
 fp16_add:
     #prologue
@@ -317,9 +313,8 @@ align_mantissa:
     blez a1,end_align_mantissa
     srl a0,a0,a1
 end_align_mantissa:
+
     ret
-    
-#################################################################
 
 printInput:
     mv t1,a0
@@ -394,170 +389,58 @@ printInput:
     
     ret
     
-#################################################################
-    
 printOutput:
-    mv a3,a0
+    mv t1,a0
     la a0,str5
     li a7,4
-    ecall #print "Output x is : "
+    ecall #print "Output y is : "
     
-    lw a0,0(a3)
-    jal fp16_to_fp32
-    li a7,2
+    lw a0,0(t1)
+    li a7,34
     ecall #print y[1]
     
     la a0,str3
     li a7,4
     ecall #print space
     
-    lw a0,4(a3)
-    jal fp16_to_fp32
-    li a7,2    
+    lw a0,4(t1)
+    li a7,34
     ecall #print y[2]
     
     la a0,str3
     li a7,4
     ecall #print space
     
-    lw a0,8(a3)
-    jal fp16_to_fp32
-    li a7,2
+    lw a0,8(t1)
+    li a7,34
     ecall #print y[3]
     
     la a0,str3
     li a7,4
     ecall #print space
     
-    lw a0,12(a3)
-    jal fp16_to_fp32
-    li a7,2
+    lw a0,12(t1)
+    li a7,34
     ecall #print y[4]
     
     la a0,str3
     li a7,4
     ecall #print space
     
-    lw a0,16(a3)
-    jal fp16_to_fp32
-    li a7,2
+    lw a0,16(t1)
+    li a7,34
     ecall #print y[5]
     
-    la a0,str3
+        la a0,str3
     li a7,4
     ecall #print space
     
     ##### below is for testcase 4 #####
-    #lw a0,20(a3)
-    #jal fp16_to_fp32
-    #li a7,2
+    #lw a0,20(t1)
+    #li a7,34
     #ecall #print y[6]
     
     #la a0,str3
     #li a7,4
     #ecall #print space
     ###################################
-    
-    li a7,10
-    ecall
-    
-#################################################################
-
-fp16_to_fp32:
-    #prologue
-    addi sp,sp,-20
-    sw s0,0(sp)
-    sw s1,4(sp)
-    sw s2,8(sp)
-    sw s3,12(sp)
-    sw s4,20(sp)
-    
-    #start
-    mv s0,a0
-    slli s1, s0, 16 # w(s1) = (uint32_t)h << 16;
-    li s2, 0x80000000
-    and s2, s1, s2 # sign(s2) = w & UINT32_C(0x80000000);
-    li s3,0x7FFFFFFF
-    and s3, s1, s3 # nonsign(s3) = w & UINT32_C(0x7FFFFFFF);
-    
-    mv a0,s3
-    mv t6,ra
-    jal my_clz #renorm_shift = my_clz(nonsign);
-    jal renorm_if
-    mv s4, a0  #renorm_shift(s4) = renorm_shift > 5 ? renorm_shift - 5 : 0;
-    mv ra,t6
-    
-    li t0,0x7F800000 #INT32_C(0x7F800000)
-    li t1,0x04000000 
-    add t1,s3,t1 # nonsign + 0x04000000
-    srli t1,t1,8  # (nonsign + 0x04000000) >> 8
-    and t0,t0,t1 # inf_nan_mask(t0) = (nonsign + 0x04000000) >> 8 & 0x7F800000
-    
-    addi t1,s3,-1
-    srli t1,t1,31 #zero_mask(t1) = (int32_t)(nonsign - 1) >> 31;
-    
-    sll t2,s3,s4
-    srli t2,t2,3
-    li t3,0x70
-    sub t3,t3,s4
-    slli t3,t3,23
-    add t2,t2,t3 #((nonsign << renorm_shift >> 3) + ((0x70 - renorm_shift) << 23))
-    or t2,t2,t0 #(((nonsign << renorm_shift >> 3) + ((0x70 - renorm_shift) << 23)) | inf_nan_mask)
-    
-    li t4,0xFFFFFFFF
-    xor t1,t1,t4 # ~zero_mask(~t1)
-    
-    and t2,t2,t1 #((((nonsign << renorm_shift >> 3) + ((0x70 - renorm_shift) << 23)) | inf_nan_mask) & ~zero_mask)
-    
-    or a0,s2,t2
-    
-    #epilogue
-    lw s4,20(sp)
-    lw s3,12(sp)
-    lw s2,8(sp)
-    lw s1,4(sp)
-    lw s0,0(sp)
-    addi sp,sp,20
-    
-    ret
-    
-my_clz:
-    addi sp,sp,-20
-    sw s0,0(sp)
-    sw s1,4(sp)
-    sw s2,8(sp)
-    sw s3,12(sp)
-    sw s4,20(sp)
-    
-    li s0, 0 #set count
-    li s1, 31 #set i
-    
-clz_loop:
-    bltz s1, clz_done #if i<0, escape the loop
-    li s2, 1 
-    sll s3, s2, s1
-    and s4, s3, a0
-    bnez s4, clz_done
-    addi s0, s0, 1
-    addi s1, s1, -1
-    j clz_loop
-    
-clz_done:    
-    mv a0, s0
-    lw s4,20(sp)
-    lw s3,12(sp)
-    lw s2,8(sp)
-    lw s1,4(sp)
-    lw s0,0(sp)
-    addi sp,sp,20
-    ret
-    
-renorm_if:
-    li t0, 5
-    blt t0,a0,renorm_if_true
-    li a0,0
-    ret
-    
-renorm_if_true:
-    addi a0,a0,-5
-    ret
