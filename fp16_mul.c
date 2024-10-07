@@ -47,7 +47,6 @@ uint16_t fmul16(uint16_t a, uint16_t b)
 
 int main()
 {
-    // 測試浮點數乘法
     uint16_t fp16_a = 0x3a00; // 1.0
     uint16_t fp16_b = 0x4000; // 32.0
     int fp16_result = fmul16(fp16_a, fp16_b);

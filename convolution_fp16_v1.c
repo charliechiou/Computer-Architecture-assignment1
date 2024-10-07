@@ -49,13 +49,12 @@ static inline float fp16_to_fp32(uint16_t h)
     return bits_to_fp32(result);
 }
 
-// 計算最高有效位的位置，使用 `my_clz` 函數
 int highest_bit_pos(uint32_t value)
 {
     if (value == 0)
-        return -1; // 處理零的情況
+        return -1; 
 
-    return 31 - my_clz(value); // 使用 `my_clz` 計算最高位位置
+    return 31 - my_clz(value);
 }
 
 // fp16 multiplication

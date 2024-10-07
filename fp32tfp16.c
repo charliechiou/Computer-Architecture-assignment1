@@ -17,7 +17,6 @@ static inline float bits_to_fp32(uint32_t bits)
     return f;
 }
 
-// 將 FP32 轉換為 FP16 的函數
 static inline uint16_t fp32_to_fp16(float f)
 {
     const float scale_to_inf = 0x1.0p+112f;
@@ -41,11 +40,9 @@ static inline uint16_t fp32_to_fp16(float f)
 
 int main()
 {
-    // 測試的浮點數數值
     float test_values[] = {0.0f, -0.0f, 1.0f, -1.0f, 65504.0f, 1.5f, 3.14159f, 0.00006103515625f, INFINITY, -INFINITY, NAN};
     int num_tests = sizeof(test_values) / sizeof(test_values[0]);
 
-    // 執行測試並顯示結果
     for (int i = 0; i < num_tests; i++)
     {
         float value = test_values[i];

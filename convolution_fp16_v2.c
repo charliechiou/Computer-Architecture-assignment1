@@ -2,12 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 
-// 加法位移並對齊指數
 uint16_t align_mantissa(uint16_t mant, int shift)
 {
     if (shift > 0)
     {
-        return mant >> shift; // 若指數不一致，將尾數右移
+        return mant >> shift;
     }
     return mant;
 }
@@ -85,56 +84,47 @@ uint16_t fp16_bitwise_add(uint16_t a, uint16_t b)
     return sign_a | (exp_result << 10) | mant_result;
 }
 
-// 16 位浮點數乘法
 int float_mul(int f1, int f2)
 {
     int res_exp = 0;
     int res_frac = 0;
 
-    // 取得指數和尾數
     int exp1 = (f1 & (((1 << 5) - 1) << 10)) >> 10;
     int exp2 = (f2 & (((1 << 5) - 1) << 10)) >> 10;
     int frac1 = (f1 & ((1 << 10) - 1)) | (1 << 10);
     int frac2 = (f2 & ((1 << 10) - 1)) | (1 << 10);
 
-    // 加上指數，並去除雙重偏置
     res_exp = exp1 + exp2 - 15;
 
-    // 相乘尾數
-    int64_t res_mant = (int64_t)frac1 * (int64_t)frac2; // 11 位 * 11 位 → 22 位
+    int64_t res_mant = (int64_t)frac1 * (int64_t)frac2;
 
-    // 根據最高位來調整尾數
     if ((res_mant >> 21) & 1)
-    {                    // 如果最高位在第 21 位
-        res_mant >>= 11; // 向右移 11 位
-        res_exp += 1;    // 調整指數
+    {                    
+        res_mant >>= 11; 
+        res_exp += 1;    
     }
     else
     {
-        res_mant >>= 10; // 向右移 10 位
+        res_mant >>= 10; 
     }
-    res_frac = res_mant & ((1 << 10) - 1); // 移除隱含位元
+    res_frac = res_mant & ((1 << 10) - 1); 
 
-    // 如果指數超過範圍，則設為無窮大或 NaN
     if (res_exp <= 0)
-        res_exp = 0; // 設為次正常數或零
+        res_exp = 0; 
     else if (res_exp >= (1 << 5) - 1)
-        res_exp = (1 << 5) - 1, res_frac = 0; // 無窮大或 NaN
+        res_exp = (1 << 5) - 1, res_frac = 0; 
 
-    // 構建最終的浮點數結果
     int result = (res_exp << 10) | res_frac;
     return result;
 }
 
 int main()
 {
-    // 固定的 FP16 輸入值
     uint16_t x[] = {0x3C00, 0x4000, 0x0000}; // FP16: 1.0, 2.0, 0.0
     uint16_t h[] = {0x4200, 0x4000, 0x3c00}; // FP16: 3.0, 3.0, 1.0
-    uint16_t y[20] = {0};                    // 假設卷積結果的最大長度
+    uint16_t y[20] = {0};                    
     int i, j, m = 3, n = 3;
 
-    // 計算卷積，使用 FP16 相乘和相加
     for (i = 0; i < m + n - 1; i++)
     {
         y[i] = 0;
@@ -142,15 +132,12 @@ int main()
         {
             if (j < m && (i - j) < n)
             {
-                // 使用 FP16 進行乘法
                 uint16_t fp16_result = float_mul(x[j], h[i - j]);
-                // 使用 FP16 直接相加
                 y[i] = fp16_bitwise_add(y[i], fp16_result);
             }
         }
     }
 
-    // 輸出卷積結果
     printf("Convoluted sequence is:\n");
     for (i = 0; i < m + n - 1; i++)
     {
