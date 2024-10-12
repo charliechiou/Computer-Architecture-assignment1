@@ -7,4 +7,4 @@ Below is the usage of each program:
 4. **fp16_add.s** - Handles FP16 addition.
 5. **fp16_mul.s** - Uses the M extension for mantissa multiplication.
 6. **fp16_mul_cus.s** - Performs mantissa multiplication using bitwise operations.
-7. **fp16_to_fp32.s** - Converts the result back into FP32 format."
+7. **fp16_to_fp32.s** - Converts the result back into FP32 format.
