@@ -2,11 +2,13 @@
 #include <stdio.h>
 #include <string.h>
 
+/*Addition */
+// Aligning the mantissa based on the shift value
 uint16_t align_mantissa(uint16_t mant, int shift)
 {
     if (shift > 0)
     {
-        return mant >> shift;
+        return mant >> shift; // Right-shift the mantissa if shift > 0
     }
     return mant;
 }
@@ -49,12 +51,12 @@ uint16_t fp16_bitwise_add(uint16_t a, uint16_t b)
     {
         if (mant_a >= mant_b)
         {
-            mant_result = mant_a - mant_b; // compare and minus
+            mant_result = mant_a - mant_b; // compare and subtraction
         }
         else
         {
-            mant_result = mant_b - mant_a;
-            sign_a = sign_b; // change the sign bit
+            mant_result = mant_b - mant_a; // subtraction
+            sign_a = sign_b;               // change the sign bit
         }
     }
 
@@ -83,44 +85,63 @@ uint16_t fp16_bitwise_add(uint16_t a, uint16_t b)
     return sign_a | (exp_result << 10) | mant_result;
 }
 
-int float_mul(int f1, int f2)
+/*Multiplication*/
+// Get the nth bit of a value
+static inline int64_t getbit(int64_t value, int n)
 {
-    int res_exp = 0;
-    int res_frac = 0;
+    return (value >> n) & 1;
+}
 
-    int exp1 = (f1 & (((1 << 5) - 1) << 10)) >> 10;
-    int exp2 = (f2 & (((1 << 5) - 1) << 10)) >> 10;
-    int frac1 = (f1 & ((1 << 10) - 1)) | (1 << 10);
-    int frac2 = (f2 & ((1 << 10) - 1)) | (1 << 10);
-
-    res_exp = exp1 + exp2 - 15;
-
-    int64_t res_mant = (int64_t)frac1 * (int64_t)frac2;
-
-    if ((res_mant >> 21) & 1)
+// FP16 integer multiplication
+int64_t imul16(int64_t a, int64_t b)
+{
+    int64_t r = 0, a64 = (int64_t)a, b64 = (int64_t)b;
+    for (int i = 0; i < 16; i++)
     {
-        res_mant >>= 11;
-        res_exp += 1;
+        if (getbit(b64, i))
+        {
+            r += a64 << i;
+        }
     }
-    else
-    {
-        res_mant >>= 10;
-    }
-    res_frac = res_mant & ((1 << 10) - 1);
+    return r;
+}
 
-    if (res_exp <= 0)
-        res_exp = 0;
-    else if (res_exp >= (1 << 5) - 1)
-        res_exp = (1 << 5) - 1, res_frac = 0;
+// FP16 multiplication
+uint16_t fmul16(uint16_t a, uint16_t b)
+{
+    /* sign */
+    int sign_a = a >> 15;
+    int sign_b = b >> 15;
 
-    int result = (res_exp << 10) | res_frac;
-    return result;
+    /* mantissa */
+    int32_t mantissa_a = (a & 0x3FF) | 0x400; // FP16: 10-bit mantissa + hidden bit
+    int32_t mantissa_b = (b & 0x3FF) | 0x400;
+
+    /* exponent */
+    int32_t exp_a = ((a >> 10) & 0x1F); // FP16: 5-bit exponent
+    int32_t exp_b = ((b >> 10) & 0x1F);
+
+    /* Perform the mantissa multiplication using the imul16 function */
+    int64_t mantissa_result_tmp = imul16(mantissa_a, mantissa_b) >> 10; // Shift by FP16 mantissa bits (10 bits)
+    int mshift = mantissa_result_tmp >> 24;                             // Adjust shift if necessary (simplified example for mshift calculation)
+
+    /* Normalize the mantissa and adjust the exponent */
+    int64_t mantissa_result = mantissa_result_tmp >> mshift;
+    int32_t exp_result_tmp = exp_a + exp_b - 15; // Adjust exponent bias for FP16 (bias is 15)
+    int32_t exp_resultr = mshift ? exp_result_tmp + 1 : exp_result_tmp;
+
+    /* Determine the sign of the result */
+    int sign_result = sign_a ^ sign_b;
+
+    /* Reconstruct the final 16-bit floating-point number */
+    uint16_t r = (sign_result << 15) | ((exp_resultr & 0x1F) << 10) | (mantissa_result & 0x3FF); // Reconstruct FP16
+    return r;
 }
 
 int main()
 {
     uint16_t x[] = {0x3C00, 0x4000, 0x0000}; // FP16: 1.0, 2.0, 0.0
-    uint16_t h[] = {0x4200, 0x4000, 0x3c00}; // FP16: 3.0, 3.0, 1.0
+    uint16_t h[] = {0x4200, 0x4000, 0x3c00}; // FP16: 3.0, 2.0, 1.0
     uint16_t y[20] = {0};
     int i, j, m = 3, n = 3;
 
@@ -131,7 +152,7 @@ int main()
         {
             if (j < m && (i - j) < n)
             {
-                uint16_t fp16_result = float_mul(x[j], h[i - j]);
+                uint16_t fp16_result = fmul16(x[j], h[i - j]);
                 y[i] = fp16_bitwise_add(y[i], fp16_result);
             }
         }
@@ -142,6 +163,14 @@ int main()
     {
         printf("y[%d] = 0x%04X\n", i, y[i]);
     }
+    /*
+    Expectied:
+    0x4200 -> 3.0
+    0x4800 -> 8.0
+    0x4500 -> 5.0
+    0x4000 -> 2.0
+    0x0000 -> 0.0
+    */
 
     return 0;
 }
