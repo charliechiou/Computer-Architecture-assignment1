@@ -1,11 +1,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
+// Aligning the mantissa based on the shift value
 uint16_t align_mantissa(uint16_t mant, int shift)
 {
     if (shift > 0)
     {
-        return mant >> shift;
+        return mant >> shift; // Right-shift the mantissa if shift > 0
     }
     return mant;
 }
@@ -48,12 +49,12 @@ uint16_t fp16_bitwise_add(uint16_t a, uint16_t b)
     {
         if (mant_a >= mant_b)
         {
-            mant_result = mant_a - mant_b; // compare and minus
+            mant_result = mant_a - mant_b; // compare and subtraction
         }
         else
         {
-            mant_result = mant_b - mant_a;
-            sign_a = sign_b; // change the sign bit
+            mant_result = mant_b - mant_a; // subtraction
+            sign_a = sign_b;               // change the sign bit
         }
     }
 
@@ -89,6 +90,6 @@ int main()
 
     uint16_t result = fp16_bitwise_add(a, b); // fp16 addition
 
-    printf("Result (in FP16): 0x%04X\n", result); // expcted 0x4200
+    printf("Result (in FP16): 0x%04X\n", result); // expcted 0x4200 which is 3.0
     return 0;
 }
