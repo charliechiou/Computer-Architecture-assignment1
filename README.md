@@ -9,4 +9,4 @@ Below is the usage of each function listed in the order in which I created them:
 6. **fp16_mul.c** - Adapted from fp32_mul.c to handle FP16.
 7. **convolution_fp16_v1.c** - Before successfully implementing fp16_add, I converted the multiplication result to FP32 and then added them together.
 8. **fp16_add.c** - Handcrafted bitwise addition for FP16 convolution.
-9. **convolution_fp16_v2.c** - Combined all the functions to produce the final result for FP16 convolution."
+9. **convolution_fp16_v2.c** - Combined all the functions to produce the final result for FP16 convolution.
